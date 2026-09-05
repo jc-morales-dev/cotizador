@@ -66,7 +66,10 @@ Detalles que van con eso:
   correría con permisos del creador y filtraría las cotizaciones de todos.
 
 Sobre la anon key que va en el bundle: es pública por diseño y no es una filtración.
-Lo que protege los datos es el RLS y la ausencia de políticas para `anon`.
+Lo que protege los datos es el RLS y la ausencia de políticas para `anon`. Por eso
+mismo las variables de la demo están en `vercel.json`: acaban en el JavaScript que se
+descarga el navegador de cualquier forma, así que esconderlas no aportaría nada.
+La `service_role` key, esa sí secreta, no se usa en ningún lado de este proyecto.
 
 ## Otras decisiones
 
