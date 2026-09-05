@@ -10,6 +10,18 @@ tipo `/c/QiLn0LfQBdxX` que tu cliente abre desde el celular sin crear ninguna cu
 Ejemplo de link público, tal como lo recibe un cliente:
 **[cotizador-opal-five.vercel.app/c/Gh4zJFsjA4O2](https://cotizador-opal-five.vercel.app/c/Gh4zJFsjA4O2)**
 
+## Cómo se ve
+
+Lo que abre el cliente, sin cuenta y desde cualquier dispositivo:
+
+![Presupuesto público en escritorio](docs/coti-publica-escritorio.png)
+
+<img src="docs/coti-publica-movil.png" width="330" alt="El mismo presupuesto en el celular" />
+
+Y el panel de quien lo emite:
+
+![Lista de cotizaciones](docs/coti-panel.png)
+
 ## Stack
 
 React 19, TypeScript, Vite 7, Tailwind v4, React Router 7 y Supabase (Postgres + Auth).
@@ -91,3 +103,11 @@ La `service_role` key, esa sí secreta, no se usa en ningún lado de este proyec
 `borrador` → `enviada` → `aprobada` → `cobrada`.
 
 En borrador el link público no muestra nada; hay que pasarla a “enviada” para compartirla.
+
+## Sobre el linter de Supabase
+
+El Security Advisor marca dos avisos sobre `cotizacion_publica`: que `anon` y
+`authenticated` pueden ejecutar una función `SECURITY DEFINER`. **Son intencionales** y
+son justamente el diseño explicado arriba: esa función es la puerta pública, y el
+linter no puede saber que la exposición es deliberada. Lo que importa es que no
+aparece ningún aviso de tabla sin RLS.
