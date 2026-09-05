@@ -1,0 +1,45 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-brand: #00c9ff;
+  --color-brand-dark: #0099cc;
+  --color-ink: #0a0a0f;
+  --color-surface: #12121c;
+  --color-line: #2b2b43;
+
+  --font-sans: 'Space Grotesk', 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+html {
+  font-family: var(--font-sans);
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Foco siempre visible: el editor de items se recorre entero con el teclado. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+/* La pagina publica es un documento: al imprimirla no deben salir botones ni barras. */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  .documento {
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+  }
+}
