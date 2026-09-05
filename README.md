@@ -86,11 +86,21 @@ mismo las variables de la demo están en `vercel.json`: acaban en el JavaScript 
 descarga el navegador de cualquier forma, así que esconderlas no aportaría nada.
 La `service_role` key, esa sí secreta, no se usa en ningún lado de este proyecto.
 
+## Cuentas
+
+Registro con confirmación por correo, inicio de sesión y recuperación de contraseña
+(pedir el enlace, elegir una nueva y entrar). Hay además una cuenta de demostración con
+datos cargados para que se pueda probar sin registrarse.
+
+Cada usuario completa **sus datos** —nombre o negocio, email de contacto y teléfono— y eso
+es lo que aparece en el presupuesto que recibe el cliente. Sin eso el documento llegaría
+sin decir de quién viene.
+
 ## Correos de autenticación
 
 El registro manda un correo de confirmación con la identidad de Coti, no con la del
-proveedor. Las plantillas están en `supabase/templates/` y se envían por un SMTP propio
-(Brevo).
+proveedor. Las plantillas (confirmar cuenta y restablecer contraseña) están en
+`supabase/templates/` y se envían por un SMTP propio (Brevo).
 
 ![Correo de confirmación](docs/coti-email-confirmacion.png)
 
