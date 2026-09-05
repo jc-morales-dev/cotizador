@@ -86,6 +86,28 @@ mismo las variables de la demo están en `vercel.json`: acaban en el JavaScript 
 descarga el navegador de cualquier forma, así que esconderlas no aportaría nada.
 La `service_role` key, esa sí secreta, no se usa en ningún lado de este proyecto.
 
+## Correos de autenticación
+
+El registro manda un correo de confirmación con la identidad de Coti, no con la del
+proveedor. Las plantillas están en `supabase/templates/` y se envían por un SMTP propio
+(Brevo).
+
+![Correo de confirmación](docs/coti-email-confirmacion.png)
+
+Detalles que valen la pena:
+
+- **Supabase no deja editar las plantillas hasta que configurás un SMTP propio.** Con el
+  servidor por defecto quedan bloqueadas.
+- Y ese servidor por defecto **solo envía a miembros de tu organización**: a cualquier otra
+  dirección le responde *"Email address not authorized"*. Es decir, con la configuración
+  inicial el registro estaba roto para todo el mundo menos para el dueño del proyecto, y
+  sin avisar.
+- El **Site URL** hay que apuntarlo al dominio de producción. Viene como
+  `http://localhost:3000`, así que el botón del correo llevaría a una página muerta.
+- Los correos van con **tablas y estilos en línea**: Gmail y Outlook no soportan flexbox
+  ni grid.
+- El enlace de confirmación **se invalida al usarse**.
+
 ## Otras decisiones
 
 - **Guardado transaccional.** Guardar es "reemplazar los ítems". Hacerlo en un `delete`
