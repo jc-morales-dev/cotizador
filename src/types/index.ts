@@ -31,6 +31,13 @@ export interface Quote extends QuoteSummary {
   items: QuoteItem[]
 }
 
+/** Datos de quien emite el presupuesto, tal como los ve el cliente. */
+export interface Profile {
+  nombre: string
+  email_contacto: string | null
+  telefono: string | null
+}
+
 /** Lo que devuelve la RPC pública: sin id ni user_id, el cliente no necesita identificadores internos. */
 export interface PublicQuote {
   cliente: string
@@ -38,6 +45,8 @@ export interface PublicQuote {
   estado: QuoteStatus
   slug: string
   created_at: string
+  /** Null mientras el dueño no haya completado su perfil. */
+  emisor: Profile | null
   items: QuoteItem[]
   total: number
 }

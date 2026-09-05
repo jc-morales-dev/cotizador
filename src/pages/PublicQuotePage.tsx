@@ -91,7 +91,26 @@ export function PublicQuotePage() {
           {quote.titulo}
         </h1>
 
-        <dl className="mt-4 flex flex-wrap gap-x-8 gap-y-2 text-sm">
+        <dl className="mt-5 flex flex-wrap gap-x-10 gap-y-4 text-sm">
+          {quote.emisor && (
+            <div>
+              <dt className="text-slate-400">De</dt>
+              <dd className="font-medium text-slate-800">{quote.emisor.nombre}</dd>
+              {quote.emisor.email_contacto && (
+                <dd className="mt-0.5 text-slate-500">
+                  <a
+                    href={`mailto:${quote.emisor.email_contacto}`}
+                    className="underline-offset-2 hover:underline"
+                  >
+                    {quote.emisor.email_contacto}
+                  </a>
+                </dd>
+              )}
+              {quote.emisor.telefono && (
+                <dd className="mt-0.5 text-slate-500">{quote.emisor.telefono}</dd>
+              )}
+            </div>
+          )}
           <div>
             <dt className="text-slate-400">Para</dt>
             <dd className="font-medium text-slate-800">{quote.cliente}</dd>

@@ -16,6 +16,9 @@ export function Layout({ children }: { children: ReactNode }) {
 
           <div className="flex items-center gap-4 text-sm">
             <span className="hidden text-slate-400 sm:inline">{session?.user.email}</span>
+            <Link to="/perfil" className="text-slate-300 transition hover:text-brand">
+              Tus datos
+            </Link>
             <button
               type="button"
               onClick={() => supabase.auth.signOut()}

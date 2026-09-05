@@ -4,8 +4,11 @@ import { Layout } from '@/components/Layout'
 import { useAuth } from '@/hooks/useAuth'
 import { Spinner } from '@/components/ui'
 import { LoginPage } from '@/pages/LoginPage'
+import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage'
+import { NewPasswordPage } from '@/pages/NewPasswordPage'
 import { QuotesPage } from '@/pages/QuotesPage'
 import { QuoteEditorPage } from '@/pages/QuoteEditorPage'
+import { ProfilePage } from '@/pages/ProfilePage'
 import { PublicQuotePage } from '@/pages/PublicQuotePage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 
@@ -40,11 +43,15 @@ export function App() {
           {/* Pública: la abre el cliente final, sin cuenta. */}
           <Route path="/c/:slug" element={<PublicQuotePage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/recuperar" element={<ForgotPasswordPage />} />
+          {/* Fuera de ProtectedRoute: hay que poder mostrar "el enlace venció" sin sesión. */}
+          <Route path="/nueva-contrasena" element={<NewPasswordPage />} />
 
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<QuotesPage />} />
             <Route path="/nueva" element={<QuoteEditorPage />} />
             <Route path="/cotizacion/:id" element={<QuoteEditorPage />} />
+            <Route path="/perfil" element={<ProfilePage />} />
           </Route>
 
           <Route path="*" element={<NotFoundPage />} />

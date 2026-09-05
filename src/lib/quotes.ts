@@ -114,6 +114,13 @@ export async function getPublicQuote(slug: string): Promise<PublicQuote | null> 
     estado: data.estado as QuoteStatus,
     slug: data.slug,
     created_at: data.created_at,
+    emisor: data.emisor
+      ? {
+          nombre: String(data.emisor.nombre ?? ''),
+          email_contacto: data.emisor.email_contacto ?? null,
+          telefono: data.emisor.telefono ?? null,
+        }
+      : null,
     items: mapItems(data.items),
     total: toNumber(data.total),
   }

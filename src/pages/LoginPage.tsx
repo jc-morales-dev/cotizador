@@ -1,5 +1,5 @@
 import { useId, useState, type FormEvent } from 'react'
-import { Navigate, useLocation } from 'react-router-dom'
+import { Link, Navigate, useLocation } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
 import { Spinner } from '@/components/ui'
@@ -158,6 +158,15 @@ export function LoginPage() {
               {busy ? 'Un momento…' : mode === 'login' ? 'Entrar' : 'Crear cuenta'}
             </button>
           </form>
+
+          {mode === 'login' && (
+            <Link
+              to="/recuperar"
+              className="mt-4 block text-center text-sm text-slate-400 transition hover:text-brand"
+            >
+              ¿Olvidaste tu contraseña?
+            </Link>
+          )}
 
           <div className="mt-6 border-t border-line pt-5">
             <button
