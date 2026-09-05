@@ -5,7 +5,10 @@ Cotizaciones con ítems, total y link público para el cliente.
 Armás un presupuesto, le ponés los ítems con cantidad y precio, y compartís un link
 tipo `/c/QiLn0LfQBdxX` que tu cliente abre desde el celular sin crear ninguna cuenta.
 
-**[Ver demo](https://cotizador-jc.vercel.app)** · Entrá con el botón **“Entrar como demo”**, sin registrarte.
+**[Ver demo](https://cotizador-opal-five.vercel.app)** · Entrá con el botón **“Entrar como demo”**, sin registrarte.
+
+Ejemplo de link público, tal como lo recibe un cliente:
+**[cotizador-opal-five.vercel.app/c/Gh4zJFsjA4O2](https://cotizador-opal-five.vercel.app/c/Gh4zJFsjA4O2)**
 
 ## Stack
 

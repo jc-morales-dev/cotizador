@@ -1,0 +1,38 @@
+name: Mantener viva la demo
+
+# Supabase pausa los proyectos del plan gratuito tras una semana sin consultas,
+# y una demo de portfolio se puede pasar meses sin visitas. Esto la toca cada
+# tres días para que el link público nunca aparezca caído ante un cliente.
+#
+# Ojo: GitHub desactiva los cron de un repo sin commits durante 60 días. Si eso
+# pasa, se reactiva desde la pestaña Actions con un clic.
+
+on:
+  schedule:
+    - cron: '0 6 */3 * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Consultar la cotización pública de ejemplo
+        env:
+          SUPABASE_URL: https://ezxdwjtdlrtcgwjkllan.supabase.co
+          # La anon key es pública por diseño: ya viaja en el bundle del navegador.
+          ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6eGR3anRkbHJ0Y2d3amtsbGFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg1NzYzMDMsImV4cCI6MjEwNDE1MjMwM30.GY2P8wzCh2epxop-rhuVKBpDnYH8NjnJZrewOuemnqI
+        run: |
+          respuesta=$(curl -sS -X POST "$SUPABASE_URL/rest/v1/rpc/cotizacion_publica" \
+            -H "apikey: $ANON_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"p_slug":"Gh4zJFsjA4O2"}')
+
+          echo "Respuesta: $respuesta"
+
+          # Si la base está dormida o el esquema cambió, la respuesta no trae el total.
+          if ! echo "$respuesta" | grep -q '"total"'; then
+            echo "::error::La demo no respondió con una cotización válida."
+            exit 1
+          fi
+
+          echo "La demo sigue viva."
