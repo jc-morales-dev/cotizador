@@ -110,10 +110,10 @@ export function PublicQuotePage() {
             <th scope="col" className="pb-3 font-medium">
               Detalle
             </th>
-            <th scope="col" className="pb-3 text-right font-medium">
+            <th scope="col" className="pb-3 pl-4 text-right font-medium">
               Cant.
             </th>
-            <th scope="col" className="hidden pb-3 text-right font-medium sm:table-cell">
+            <th scope="col" className="hidden pb-3 pl-6 text-right font-medium sm:table-cell">
               Precio
             </th>
             <th scope="col" className="pb-3 text-right font-medium">
@@ -130,8 +130,8 @@ export function PublicQuotePage() {
                   {formatMoney(item.precio)} c/u
                 </span>
               </td>
-              <td className="py-3 text-right tabular-nums text-slate-600">{item.cantidad}</td>
-              <td className="hidden py-3 text-right tabular-nums text-slate-600 sm:table-cell">
+              <td className="py-3 pl-4 text-right tabular-nums text-slate-600">{item.cantidad}</td>
+              <td className="hidden py-3 pl-6 text-right tabular-nums text-slate-600 sm:table-cell">
                 {formatMoney(item.precio)}
               </td>
               <td className="py-3 pl-4 text-right tabular-nums font-medium text-slate-900">
