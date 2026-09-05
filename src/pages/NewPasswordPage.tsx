@@ -39,7 +39,15 @@ export function NewPasswordPage() {
     const { error: updateError } = await supabase.auth.updateUser({ password })
 
     if (updateError) {
-      setError('No pudimos cambiar la contraseña. Pedí un enlace nuevo e intentá otra vez.')
+      // Supabase devuelve un 422 propio cuando repetís la contraseña que ya tenías.
+      // Sin este caso aparte, el usuario leería "pedí otro enlace" y buscaría el
+      // problema donde no está.
+      const esLaMisma = updateError.message.toLowerCase().includes('should be different')
+      setError(
+        esLaMisma
+          ? 'Esa ya es tu contraseña actual. Elegí una distinta.'
+          : 'No pudimos cambiar la contraseña. Pedí un enlace nuevo e intentá otra vez.',
+      )
       setBusy(false)
       return
     }
