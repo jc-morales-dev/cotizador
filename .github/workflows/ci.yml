@@ -23,6 +23,8 @@ jobs:
 
       - run: npm run lint
 
+      - run: npm test
+
       - run: npm run build
         env:
           # El build solo necesita que las variables existan; las reales viven en Vercel.

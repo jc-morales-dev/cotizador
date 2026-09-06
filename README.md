@@ -32,6 +32,7 @@ React 19, TypeScript, Vite 7, Tailwind v4, React Router 7 y Supabase (Postgres +
 npm i
 cp .env.example .env.local   # completá URL y anon key de tu proyecto Supabase
 npm run dev
+npm test                     # 30 tests con Vitest
 ```
 
 Para levantar la base de datos, pegá `supabase/migrations/0001_esquema_inicial.sql`
@@ -117,6 +118,18 @@ Detalles que valen la pena:
 - Los correos van con **tablas y estilos en línea**: Gmail y Outlook no soportan flexbox
   ni grid.
 - El enlace de confirmación **se invalida al usarse**.
+
+## Tests
+
+30 tests con Vitest, sobre lo que rompería el producto si fallara: el cálculo del dinero
+y el editor de ítems. Corren en CI en cada push.
+
+Los verifiqué rompiendo el código a propósito para ver si fallaban, y ahí apareció un
+detalle: el caso típico de `0.1 + 0.2` **no distingue** una implementación con redondeo de
+una sin él, porque multiplicado por 100 da 30 exacto en los dos casos. Un test que solo
+usara ese ejemplo daría una seguridad falsa. El que sí delata la diferencia es
+**7 × 19,99**: sin redondear da `139.92999999999998`, que se imprime como 139,92, un
+centavo menos de lo que el cliente suma a mano.
 
 ## Otras decisiones
 
