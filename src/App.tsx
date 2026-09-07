@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
+import { Navigate, Outlet, RouterProvider, createBrowserRouter, useLocation } from 'react-router-dom'
 import { AuthProvider } from '@/components/AuthProvider'
 import { Layout } from '@/components/Layout'
 import { useAuth } from '@/hooks/useAuth'
@@ -35,28 +35,36 @@ function ProtectedRoute() {
   )
 }
 
+// createBrowserRouter y no <BrowserRouter>: el editor avisa de los cambios sin
+// guardar con useBlocker, y ese hook solo existe en los routers de datos.
+// Con <BrowserRouter> lanza "useBlocker must be used within a data router".
+const router = createBrowserRouter([
+  // Pública: la abre el cliente final, sin cuenta.
+  { path: '/c/:slug', element: <PublicQuotePage /> },
+  { path: '/login', element: <LoginPage /> },
+  { path: '/recuperar', element: <ForgotPasswordPage /> },
+  // Fuera de ProtectedRoute: hay que poder mostrar "el enlace venció" sin sesión.
+  { path: '/nueva-contrasena', element: <NewPasswordPage /> },
+
+  {
+    element: <ProtectedRoute />,
+    children: [
+      { path: '/', element: <QuotesPage /> },
+      { path: '/nueva', element: <QuoteEditorPage /> },
+      { path: '/cotizacion/:id', element: <QuoteEditorPage /> },
+      { path: '/perfil', element: <ProfilePage /> },
+    ],
+  },
+
+  { path: '*', element: <NotFoundPage /> },
+])
+
 export function App() {
+  // AuthProvider queda por fuera del RouterProvider: no usa hooks de routing y
+  // así la sesión no se remonta en cada navegación.
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <Routes>
-          {/* Pública: la abre el cliente final, sin cuenta. */}
-          <Route path="/c/:slug" element={<PublicQuotePage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/recuperar" element={<ForgotPasswordPage />} />
-          {/* Fuera de ProtectedRoute: hay que poder mostrar "el enlace venció" sin sesión. */}
-          <Route path="/nueva-contrasena" element={<NewPasswordPage />} />
-
-          <Route element={<ProtectedRoute />}>
-            <Route path="/" element={<QuotesPage />} />
-            <Route path="/nueva" element={<QuoteEditorPage />} />
-            <Route path="/cotizacion/:id" element={<QuoteEditorPage />} />
-            <Route path="/perfil" element={<ProfilePage />} />
-          </Route>
-
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-      </AuthProvider>
-    </BrowserRouter>
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
   )
 }

@@ -55,6 +55,7 @@ const STATUS_STYLES: Record<QuoteStatus, string> = {
   borrador: 'border-slate-500/40 bg-slate-500/15 text-slate-300',
   enviada: 'border-sky-400/40 bg-sky-400/15 text-sky-200',
   aprobada: 'border-emerald-400/40 bg-emerald-400/15 text-emerald-200',
+  rechazada: 'border-rose-400/40 bg-rose-400/15 text-rose-200',
   cobrada: 'border-brand/40 bg-brand/15 text-brand',
 }
 

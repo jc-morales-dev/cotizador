@@ -1,13 +1,17 @@
-import { centsToAmount, formatMoney, lineTotalCents, parseAmount } from '@/lib/money'
+import { centsToAmount, computeTotals, formatMoney, lineTotalCents, parseAmount } from '@/lib/money'
 import { createDraftItem } from '@/lib/drafts'
-import type { DraftItem } from '@/types'
+import type { DraftItem, Moneda } from '@/types'
 
 interface Props {
   items: DraftItem[]
   onChange: (items: DraftItem[]) => void
+  moneda: Moneda
+  /** Porcentajes. Con los dos en 0 el desglose se colapsa a una sola línea de total. */
+  descuento: number
+  iva: number
 }
 
-export function ItemsEditor({ items, onChange }: Props) {
+export function ItemsEditor({ items, onChange, moneda, descuento, iva }: Props) {
   function update(key: string, field: keyof Omit<DraftItem, 'key'>, value: string) {
     onChange(items.map((item) => (item.key === key ? { ...item, [field]: value } : item)))
   }
@@ -16,10 +20,16 @@ export function ItemsEditor({ items, onChange }: Props) {
     onChange(items.filter((item) => item.key !== key))
   }
 
-  const totalCents = items.reduce(
-    (sum, item) => sum + lineTotalCents(parseAmount(item.cantidad), parseAmount(item.precio)),
-    0,
+  const totales = computeTotals(
+    items.map((item) => ({
+      cantidad: parseAmount(item.cantidad),
+      precio: parseAmount(item.precio),
+    })),
+    { descuento, iva },
   )
+
+  // Sin descuento ni IVA el desglose son cuatro líneas que dicen lo mismo.
+  const hayDesglose = descuento > 0 || iva > 0
 
   return (
     <div>
@@ -112,18 +122,53 @@ export function ItemsEditor({ items, onChange }: Props) {
               </div>
 
               <p className="mt-2 text-right text-xs text-slate-500">
-                Subtotal: <span className="tabular-nums text-slate-300">{formatMoney(lineTotal)}</span>
+                Subtotal:{' '}
+                <span className="tabular-nums text-slate-300">{formatMoney(lineTotal, moneda)}</span>
               </p>
             </li>
           )
         })}
       </ul>
 
-      <div className="mt-6 flex items-center justify-between border-t border-line pt-4">
-        <span className="text-sm font-medium text-slate-400">Total</span>
-        <span className="text-2xl font-semibold tabular-nums text-brand">
-          {formatMoney(centsToAmount(totalCents))}
-        </span>
+      <div className="mt-6 border-t border-line pt-4">
+        {hayDesglose && (
+          <dl className="mb-3 space-y-1.5 text-sm">
+            <div className="flex items-center justify-between">
+              <dt className="text-slate-400">Subtotal</dt>
+              <dd className="tabular-nums text-slate-300">
+                {formatMoney(totales.subtotal, moneda)}
+              </dd>
+            </div>
+
+            {descuento > 0 && (
+              <div className="flex items-center justify-between">
+                <dt className="text-slate-400">Descuento ({descuento} %)</dt>
+                <dd className="tabular-nums text-slate-300">
+                  −{formatMoney(totales.descuento_monto, moneda)}
+                </dd>
+              </div>
+            )}
+
+            {iva > 0 && (
+              <div className="flex items-center justify-between">
+                <dt className="text-slate-400">IVA ({iva} %)</dt>
+                <dd className="tabular-nums text-slate-300">
+                  {formatMoney(totales.iva_monto, moneda)}
+                </dd>
+              </div>
+            )}
+          </dl>
+        )}
+
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium text-slate-400">Total</span>
+          {/* data-testid: el e2e compara este importe, carácter por carácter, con el
+              de la página pública. Buscarlo por texto sería frágil con el formato
+              de moneda (espacios finos, separador de miles). */}
+          <span className="text-2xl font-semibold tabular-nums text-brand" data-testid="total">
+            {formatMoney(totales.total, moneda)}
+          </span>
+        </div>
       </div>
     </div>
   )

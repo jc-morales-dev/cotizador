@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   centsToAmount,
+  computeTotals,
   formatMoney,
   lineTotalCents,
   parseAmount,
@@ -74,6 +75,21 @@ describe('totalFromItems', () => {
     ).toBe(214.75)
   })
 
+  it('redondea cada línea antes de sumar, igual que Postgres', () => {
+    // 1,5 × 33,33 = 49,995. Si se sumara sin redondear, la línea se imprimiría
+    // como 50,00 y el total como 49,99: la columna de importes no sumaría el
+    // total que está justo abajo. La migración 0004 hace el mismo round(., 2)
+    // dentro del sum para que la página pública y el editor no discrepen.
+    expect(totalFromItems([{ cantidad: 1.5, precio: 33.33 }])).toBe(50)
+
+    expect(
+      totalFromItems([
+        { cantidad: 1.5, precio: 33.33 },
+        { cantidad: 1.5, precio: 33.33 },
+      ]),
+    ).toBe(100)
+  })
+
   it('suma un presupuesto realista', () => {
     expect(
       totalFromItems([
@@ -108,11 +124,78 @@ describe('centsToAmount', () => {
 
 describe('formatMoney', () => {
   it('siempre muestra dos decimales', () => {
-    expect(formatMoney(1660)).toMatch(/1[.\s]660,00/)
-    expect(formatMoney(5)).toMatch(/5,00/)
+    expect(formatMoney(1660, 'UYU')).toMatch(/1[.\s]660,00/)
+    expect(formatMoney(5, 'UYU')).toMatch(/5,00/)
   })
 
   it('no imprime NaN si le llega un valor corrupto', () => {
-    expect(formatMoney(Number.NaN)).toMatch(/0,00/)
+    expect(formatMoney(Number.NaN, 'UYU')).toMatch(/0,00/)
+  })
+})
+
+describe('computeTotals', () => {
+  const ITEMS = [
+    { cantidad: 2, precio: 500 },
+    { cantidad: 1, precio: 200 },
+  ]
+
+  it('sin descuento ni IVA el total es el subtotal', () => {
+    const totales = computeTotals(ITEMS, { descuento: 0, iva: 0 })
+
+    expect(totales.subtotal).toBe(1200)
+    expect(totales.descuento_monto).toBe(0)
+    expect(totales.neto).toBe(1200)
+    expect(totales.iva_monto).toBe(0)
+    expect(totales.total).toBe(1200)
+  })
+
+  it('calcula el descuento sobre el subtotal y el IVA sobre el neto', () => {
+    // Para el TOTAL el orden da igual: dos porcentajes conmutan. Lo que cambia, y
+    // es lo que se imprime renglón por renglón en el documento, es el monto de IVA:
+    // sobre el neto son 237,60 y sobre el subtotal serían 264. Un cliente que
+    // controla el IVA de una factura mira ese número, no solo el total.
+    const totales = computeTotals(ITEMS, { descuento: 10, iva: 22 })
+
+    expect(totales.subtotal).toBe(1200)
+    expect(totales.descuento_monto).toBe(120)
+    expect(totales.neto).toBe(1080)
+    expect(totales.iva_monto).toBe(237.6)
+    expect(totales.total).toBe(1317.6)
+  })
+
+  it('redondea el descuento y el IVA al centavo', () => {
+    // 333,33 con 15 % de descuento da 49,9995, que tiene que quedar en 50,00 y no
+    // arrastrar milésimas hasta el total.
+    const totales = computeTotals([{ cantidad: 1, precio: 333.33 }], {
+      descuento: 15,
+      iva: 22,
+    })
+
+    expect(totales.descuento_monto).toBe(50)
+    expect(totales.neto).toBe(283.33)
+    expect(totales.iva_monto).toBe(62.33)
+    expect(totales.total).toBe(345.66)
+  })
+
+  it('el desglose cierra: neto + IVA da exactamente el total', () => {
+    // Si alguno de los renglones se redondeara por su cuenta, el documento
+    // mostraría una suma que no da, que es justo lo que un cliente verifica.
+    const totales = computeTotals(
+      [
+        { cantidad: 3, precio: 19.99 },
+        { cantidad: 7, precio: 4.33 },
+      ],
+      { descuento: 7.5, iva: 22 },
+    )
+
+    expect(totales.subtotal - totales.descuento_monto).toBe(totales.neto)
+    expect(totales.neto + totales.iva_monto).toBeCloseTo(totales.total, 10)
+  })
+
+  it('sin ítems devuelve todo en cero', () => {
+    const totales = computeTotals([], { descuento: 22, iva: 22 })
+
+    expect(totales.subtotal).toBe(0)
+    expect(totales.total).toBe(0)
   })
 })

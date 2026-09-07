@@ -8,9 +8,25 @@ import { toDraftItems } from '@/lib/drafts'
 import type { QuoteItem } from '@/types'
 
 /** El editor es controlado, así que para probarlo necesita quien le sostenga el estado. */
-function EditorConEstado({ iniciales = [] }: { iniciales?: QuoteItem[] }) {
+function EditorConEstado({
+  iniciales = [],
+  descuento = 0,
+  iva = 0,
+}: {
+  iniciales?: QuoteItem[]
+  descuento?: number
+  iva?: number
+}) {
   const [items, setItems] = useState(() => toDraftItems(iniciales))
-  return <ItemsEditor items={items} onChange={setItems} />
+  return (
+    <ItemsEditor
+      items={items}
+      onChange={setItems}
+      moneda="UYU"
+      descuento={descuento}
+      iva={iva}
+    />
+  )
 }
 
 const PRESUPUESTO: QuoteItem[] = [
@@ -106,5 +122,22 @@ describe('ItemsEditor', () => {
     await user.click(screen.getByRole('button', { name: 'Borrar ítem 1' }))
 
     expect(screen.getByText(/Agregá al menos un ítem/)).toBeInTheDocument()
+  })
+
+  it('muestra el desglose solo cuando hay descuento o IVA', () => {
+    const { unmount } = render(<EditorConEstado iniciales={PRESUPUESTO} />)
+
+    // Sin descuento ni IVA, "Subtotal" como renglón propio sería ruido: el total
+    // ya dice lo mismo. (Las líneas tienen su propio "Subtotal: $x", que no cuenta.)
+    expect(screen.queryByText('Subtotal')).not.toBeInTheDocument()
+    unmount()
+
+    render(<EditorConEstado iniciales={PRESUPUESTO} descuento={10} iva={22} />)
+
+    // 1270 − 10 % = 1143 ; + 22 % = 1394,46
+    expect(screen.getByText('Subtotal')).toBeInTheDocument()
+    expect(screen.getByText('Descuento (10 %)')).toBeInTheDocument()
+    expect(screen.getByText('IVA (22 %)')).toBeInTheDocument()
+    expect(leerTotal()).toMatch(/1[.\s]394,46/)
   })
 })
