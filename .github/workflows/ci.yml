@@ -27,7 +27,9 @@ jobs:
 
       - run: npm run build
         env:
-          # El build solo necesita que las variables existan; las reales viven en Vercel.
+          # Valores de mentira a propósito: el build solo necesita que existan, y desde
+          # que vite.config.ts corta el build si faltan, este paso también verifica eso.
+          # Las reales van en el build.env de vercel.json.
           VITE_SUPABASE_URL: https://example.supabase.co
           VITE_SUPABASE_ANON_KEY: clave-de-ejemplo-para-el-build
 

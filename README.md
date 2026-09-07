@@ -148,14 +148,23 @@ cuenta acá ni aceptó ninguna política.
 ### La anon key
 
 Es pública por diseño y no es una filtración: lo que protege los datos es el RLS y la
-ausencia de políticas para `anon`. La clave sola no abre ninguna puerta — está en el
-bundle que se descarga cualquier navegador, y está también, a la vista, en el workflow
-que mantiene viva la demo.
+ausencia de políticas para `anon`. La clave sola no abre ninguna puerta, y viaja igual en
+el bundle que se descarga cualquier navegador.
 
-Lo que sí se sacó del repo es la **configuración de build**: `vercel.json` tenía la URL y
-la clave hardcodeadas, y eso ataba cualquier clon del proyecto a la base de la demo. Ahora
-`VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` son variables de entorno del proyecto en
-Vercel, y en local salen de `.env.local`.
+Por eso vive a la vista en `vercel.json` y en el workflow que mantiene viva la demo. El
+intento de moverla a variables de entorno del proyecto **tiró la demo abajo**: el build
+salió en verde sin ellas, Vite reemplazó `import.meta.env.VITE_SUPABASE_URL` por
+`undefined`, y el error apareció recién en el navegador de quien entraba. Pantalla en
+blanco, con el deploy marcado como correcto.
+
+De ahí salió la contención que faltaba: `vite.config.ts` corta el build si las
+credenciales no están. El fallo ahora es ruidoso y ocurre en CI, no silencioso y en la
+cara de un cliente. Un deploy `READY` sirviendo una app que no arranca es peor que un
+deploy que falla, porque nadie se entera.
+
+El costo de tenerla en el repo es concreto y vale nombrarlo: quien clone el proyecto
+deploya contra esta misma base hasta que cambie los valores. Se puede pasar a variables
+de entorno cuando se quiera — el build las toma de ahí igual, y ahora avisa si faltan.
 
 La `service_role` key, esa sí secreta, no se usa en ningún lado de este proyecto.
 
