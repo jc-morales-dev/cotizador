@@ -35,7 +35,7 @@ React 19, TypeScript, Vite 7, Tailwind v4, React Router 7 y Supabase (Postgres +
 npm i
 cp .env.example .env.local   # completá URL y anon key de tu proyecto Supabase
 npm run dev
-npm test                     # 37 tests con Vitest
+npm test                     # 51 tests con Vitest
 npm run e2e                  # 2 tests de punta a punta con Playwright
 ```
 
@@ -202,8 +202,8 @@ Detalles que valen la pena:
 
 ## Tests
 
-**37 con Vitest**, sobre lo que rompería el producto si fallara: el cálculo del dinero y
-el editor de ítems.
+**51 con Vitest**, sobre lo que rompería el producto si fallara: el cálculo del dinero,
+el editor de ítems, la traducción de los errores de Supabase y el arranque de la sesión.
 
 Los verifiqué rompiendo el código a propósito para ver si fallaban, y ahí apareció un
 detalle: el caso típico de `0.1 + 0.2` **no distingue** una implementación con redondeo de
@@ -231,6 +231,36 @@ por el correlativo.
 - **Guardado transaccional.** Guardar es "reemplazar los ítems". Hacerlo en un `delete`
   y un `insert` sueltos desde el navegador deja el presupuesto sin líneas si la red se
   corta en el medio. Va todo en una función, en una sola transacción.
+- **Nada se queda colgado esperando la sesión.** `supabase.auth.getSession()` no tenía
+  `.catch`. Si rechazaba —red caída durante el refresh del token, `localStorage` bloqueado—
+  `loading` nunca pasaba a `false` y **la aplicación entera** quedaba en el spinner, sin
+  mensaje y sin salida. Era el único punto de fallo global del proyecto. El estado del
+  contexto pasó de `{ session, loading }` a tres valores (`cargando` / `lista` / `error`),
+  porque con un booleano `loading:false, session:null` significaba dos cosas distintas: "no
+  hay sesión" y "no pudimos averiguarlo". A la primera se la manda al login; a la segunda,
+  no —puede ser alguien que sí tiene sesión y se quedó del otro lado de una red caída—, así
+  que ve un mensaje con reintento.
+- **Un error no es una pantalla en blanco.** Los `errorElement` van por ruta y hay dos,
+  porque los lee gente distinta: en el panel lo ve el dueño, que puede recargar; en
+  `/c/:slug` lo ve un cliente sin cuenta, que no sabe qué es Coti y lo único accionable que
+  tiene es avisarle a quien le pasó el link. Un mensaje genérico les serviría mal a los dos.
+  **Lo que esto no cubre:** el `throw` de `src/lib/supabase.ts` ocurre al importar el módulo,
+  antes de que React renderice, así que ningún boundary lo agarra — para ese caso la
+  contención es el guard de `vite.config.ts`.
+- **Los errores de Supabase se leen por código, no por texto en inglés.** Había cuatro
+  `includes()` sobre el mensaje de GoTrue (`'not confirmed'`, `'already registered'`,
+  `'not found'`, `'should be different'`), sin nada compartido. Si Supabase cambiaba el
+  wording, los cuatro degradaban **en silencio**, y el peor era el del login: una cuenta sin
+  confirmar habría pasado a decir "Email o contraseña incorrectos", mandando a la persona a
+  dudar de datos que estaban bien. Ahora hay un traductor único en `src/lib/erroresAuth.ts`
+  que mira `error.code`, que es API pública y estable. De paso entró
+  `over_email_send_rate_limit`, que no se contemplaba y es el error que la gente realmente
+  se encuentra al pedir el enlace de recuperación dos veces seguidas.
+- **El perfil no se puede sobrescribir con blancos.** Si fallaba la lectura, el formulario
+  se renderizaba igual con los tres campos vacíos y "Guardar" pisaba el perfil real —lo que
+  el cliente ve en el presupuesto— con nada. Ahora un fallo de lectura no ofrece el
+  formulario: muestra el error con reintento. Y el cartel de "Datos guardados." se borra al
+  editar, en vez de quedar mintiendo sobre un formulario sucio.
 - **Los importes se suman en centavos enteros.** En coma flotante `0.1 + 0.2` da
   `0.30000000000000004`, y un total que descuadra un centavo respecto al que ve el
   cliente no es aceptable.
@@ -273,6 +303,21 @@ por el correlativo.
 - **La página pública es imprimible.** `Ctrl+P` da un PDF limpio, sin botones ni barras.
   No hay librería de PDF: los navegadores ya lo hacen bien y jsPDF pesaba más que el resto
   de la aplicación junta.
+- **El cliente no descarga el panel de administración.** Las rutas del panel y de auth se
+  difieren con el `lazy` de la ruta —la forma nativa del router de datos, sin `React.lazy`
+  ni `<Suspense>` a mano—; `/c/:slug` y el 404 quedan estáticas, que es lo único que puede
+  ver alguien sin cuenta.
+
+  **La ganancia, medida y sin maquillar: de 162.931 a 157.228 bytes gzip. Un 3,5 %.**
+  Poco, y vale explicar por qué en vez de presentarlo como una victoria: lo que pesa no son
+  las páginas sino las dependencias, y `react-dom` y `supabase-js` las necesitan las dos
+  mitades. La arquitectura igual es la correcta —el panel puede crecer sin costo para el
+  cliente— pero el número de hoy es chico.
+
+  Midiendo apareció el verdadero peso muerto: **`createClient` arrastra el cliente de
+  Realtime, que este proyecto no usa en ningún lado.** Sacarlo obliga a cambiar
+  `@supabase/supabase-js` por los subpaquetes sueltos (`postgrest-js` + `auth-js`), que es
+  un refactor de toda la capa de datos. Queda anotado y medido, no hecho a las apuradas.
 
 ## Estados
 

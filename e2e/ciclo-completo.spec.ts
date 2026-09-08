@@ -17,7 +17,11 @@ import { expect, test, type Page } from '@playwright/test'
  * en la cuenta demo, reconocible por el título con marca de tiempo.
  */
 
-const CLIENTE = 'Cliente de prueba e2e'
+// Un cliente que YA existe en la demo. Guardar con un nombre nuevo crearia una
+// ficha, y borrar la cotizacion no borra al cliente: cada corrida del CI dejaba
+// residuo en la base de produccion. guardar_cotizacion solo pisa el email si se
+// le pasa uno, y aca no se le pasa ninguno, asi que reusar esta ficha no la toca.
+const CLIENTE = 'Estudio Marlow'
 
 async function entrarComoDemo(page: Page) {
   await page.goto('/login')

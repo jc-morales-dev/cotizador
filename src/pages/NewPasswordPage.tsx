@@ -1,11 +1,12 @@
 import { useId, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
+import { mensajeDelError } from '@/lib/erroresAuth'
 import { useAuth } from '@/hooks/useAuth'
 import { Spinner } from '@/components/ui'
 
 export function NewPasswordPage() {
-  const { session, loading } = useAuth()
+  const { session, estado } = useAuth()
   const navigate = useNavigate()
   const passwordId = useId()
   const repeatId = useId()
@@ -16,8 +17,8 @@ export function NewPasswordPage() {
   const [busy, setBusy] = useState(false)
 
   // Al abrir el enlace del correo, supabase-js canjea el token de la URL por una
-  // sesión antes de que esto se renderice. Por eso alcanza con esperar a `loading`.
-  if (loading) {
+  // sesión antes de que esto se renderice. Por eso alcanza con esperar al estado.
+  if (estado === 'cargando') {
     return (
       <div className="min-h-dvh bg-ink">
         <Spinner label="Validando el enlace…" />
@@ -39,14 +40,12 @@ export function NewPasswordPage() {
     const { error: updateError } = await supabase.auth.updateUser({ password })
 
     if (updateError) {
-      // Supabase devuelve un 422 propio cuando repetís la contraseña que ya tenías.
-      // Sin este caso aparte, el usuario leería "pedí otro enlace" y buscaría el
-      // problema donde no está.
-      const esLaMisma = updateError.message.toLowerCase().includes('should be different')
+      // Supabase devuelve un código propio cuando repetís la contraseña que ya
+      // tenías. Sin ese caso aparte, el usuario leería "pedí otro enlace" y
+      // buscaría el problema donde no está.
       setError(
-        esLaMisma
-          ? 'Esa ya es tu contraseña actual. Elegí una distinta.'
-          : 'No pudimos cambiar la contraseña. Pedí un enlace nuevo e intentá otra vez.',
+        mensajeDelError(updateError) ??
+          'No pudimos cambiar la contraseña. Pedí un enlace nuevo e intentá otra vez.',
       )
       setBusy(false)
       return

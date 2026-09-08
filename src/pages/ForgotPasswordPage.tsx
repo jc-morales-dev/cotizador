@@ -1,6 +1,7 @@
 import { useId, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
+import { causaDelError, mensajeDelError } from '@/lib/erroresAuth'
 
 export function ForgotPasswordPage() {
   const emailId = useId()
@@ -20,10 +21,16 @@ export function ForgotPasswordPage() {
 
     // Confirmamos el envío aunque el email no exista: decir "esa cuenta no existe"
     // permitiría averiguar quién está registrado.
-    if (resetError && !resetError.message.toLowerCase().includes('not found')) {
-      setError('No pudimos enviar el correo. Intentá de nuevo en un minuto.')
-    } else {
+    //
+    // El rate limit sí se muestra, y es el error que la gente realmente se
+    // encuentra al pedir el enlace dos veces seguidas. No delata nada: le pasa
+    // igual a un email que existe y a uno que no.
+    if (!resetError || causaDelError(resetError) === 'cuenta_no_existe') {
       setSent(true)
+    } else {
+      setError(
+        mensajeDelError(resetError) ?? 'No pudimos enviar el correo. Intentá de nuevo en un minuto.',
+      )
     }
 
     setBusy(false)
