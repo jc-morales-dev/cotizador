@@ -259,14 +259,16 @@ export function PublicQuotePage() {
         </div>
       )}
 
-      <footer className="mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6">
-        <p className="text-xs text-slate-400">
-          Presupuesto generado con <span className="font-medium text-slate-500">Coti</span>
-        </p>
+      {/*
+        El pie entero es no-print: lo unico que queda adentro es el boton de
+        imprimir, que en el papel no tiene sentido. Sin esto el PDF terminaria con
+        una linea divisoria y nada debajo.
+      */}
+      <footer className="no-print mt-10 flex justify-end border-t border-slate-200 pt-6">
         <button
           type="button"
           onClick={() => window.print()}
-          className="no-print rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50"
+          className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50"
         >
           Imprimir o guardar en PDF
         </button>
