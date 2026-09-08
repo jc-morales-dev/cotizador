@@ -15,16 +15,35 @@ export function ProfilePage() {
   const [telefono, setTelefono] = useState('')
 
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  /**
+   * Los dos errores van separados a propósito.
+   *
+   * Si falla la LECTURA no se puede mostrar el formulario: los campos saldrían
+   * vacíos y darle a "Guardar" sobrescribiría el perfil real —nombre, email y
+   * teléfono, o sea lo que el cliente ve en el presupuesto— con blancos. Antes
+   * pasaba exactamente eso, y encima el error aparecía debajo de los inputs.
+   *
+   * Si falla el GUARDADO, en cambio, los datos en pantalla son buenos y hay que
+   * dejar reintentar sin perder lo escrito.
+   */
+  const [errorAlCargar, setErrorAlCargar] = useState<string | null>(null)
+  const [errorAlGuardar, setErrorAlGuardar] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
   const userId = session?.user.id
 
   const load = useCallback(async () => {
-    if (!userId) return
+    if (!userId) {
+      // Sin esto el spinner quedaba para siempre. Hoy no puede pasar porque la
+      // ruta está dentro de ProtectedRoute, pero el componente no tiene por qué
+      // depender de un invariante que se sostiene desde otro archivo.
+      setLoading(false)
+      return
+    }
+
     setLoading(true)
-    setError(null)
+    setErrorAlCargar(null)
     try {
       const profile = await getProfile(userId)
       if (profile) {
@@ -36,7 +55,7 @@ export function ProfilePage() {
         setEmailContacto(session?.user.email ?? '')
       }
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Algo salió mal.')
+      setErrorAlCargar(caught instanceof Error ? caught.message : 'Algo salió mal.')
     } finally {
       setLoading(false)
     }
@@ -46,12 +65,20 @@ export function ProfilePage() {
     load()
   }, [load])
 
+  /** Tocar cualquier campo invalida el "Datos guardados." de la vez anterior. */
+  function editar(setter: (valor: string) => void) {
+    return (valor: string) => {
+      setSaved(false)
+      setter(valor)
+    }
+  }
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
     if (!userId) return
 
     setSaving(true)
-    setError(null)
+    setErrorAlGuardar(null)
     setSaved(false)
     try {
       await saveProfile(userId, {
@@ -61,13 +88,30 @@ export function ProfilePage() {
       })
       setSaved(true)
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Algo salió mal.')
+      setErrorAlGuardar(caught instanceof Error ? caught.message : 'Algo salió mal.')
     } finally {
       setSaving(false)
     }
   }
 
   if (loading) return <Spinner label="Cargando tus datos…" />
+
+  // No mostrar el formulario es el punto: con los campos vacíos, guardar borra
+  // el perfil de verdad.
+  if (errorAlCargar) {
+    return (
+      <div className="max-w-xl space-y-4">
+        <h1 className="text-2xl font-semibold tracking-tight">Tus datos</h1>
+        <ErrorBanner message={errorAlCargar} onRetry={load} />
+        <Link to="/" className="inline-block text-sm text-slate-400 hover:text-brand">
+          ← Volver a las cotizaciones
+        </Link>
+      </div>
+    )
+  }
+
+  const campo =
+    'w-full rounded-md border border-line bg-ink px-3 py-2 text-sm text-slate-100 placeholder:text-slate-600'
 
   return (
     <form onSubmit={handleSubmit} className="max-w-xl">
@@ -92,9 +136,9 @@ export function ProfilePage() {
             required
             maxLength={120}
             value={nombre}
-            onChange={(event) => setNombre(event.target.value)}
+            onChange={(event) => editar(setNombre)(event.target.value)}
             placeholder="Julio César Morales"
-            className="w-full rounded-md border border-line bg-ink px-3 py-2 text-sm text-slate-100 placeholder:text-slate-600"
+            className={campo}
           />
         </div>
 
@@ -107,9 +151,9 @@ export function ProfilePage() {
             type="email"
             maxLength={160}
             value={emailContacto}
-            onChange={(event) => setEmailContacto(event.target.value)}
+            onChange={(event) => editar(setEmailContacto)(event.target.value)}
             placeholder="hola@tudominio.com"
-            className="w-full rounded-md border border-line bg-ink px-3 py-2 text-sm text-slate-100 placeholder:text-slate-600"
+            className={campo}
           />
         </div>
 
@@ -122,16 +166,16 @@ export function ProfilePage() {
             type="tel"
             maxLength={40}
             value={telefono}
-            onChange={(event) => setTelefono(event.target.value)}
+            onChange={(event) => editar(setTelefono)(event.target.value)}
             placeholder="+598 99 123 456"
-            className="w-full rounded-md border border-line bg-ink px-3 py-2 text-sm text-slate-100 placeholder:text-slate-600"
+            className={campo}
           />
         </div>
       </div>
 
-      {error && (
+      {errorAlGuardar && (
         <div className="mt-6">
-          <ErrorBanner message={error} />
+          <ErrorBanner message={errorAlGuardar} />
         </div>
       )}
 

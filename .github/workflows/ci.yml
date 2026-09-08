@@ -44,10 +44,14 @@ jobs:
       group: e2e-demo
       cancel-in-progress: false
 
+    # Solo en PRs, que es donde sirve: verifica ANTES de que algo llegue a main y
+    # se despliegue a la demo. Correrlo tambien en el push del merge seria una
+    # segunda pasada escribiendo en la base de produccion para nada.
+    #
     # Los secrets no llegan a los PR desde forks, y sin credenciales el e2e no
-    # puede hacer nada. En ese caso se saltea en vez de fallar en rojo.
+    # puede hacer nada; en ese caso se saltea en vez de fallar en rojo.
     if: >
-      github.event_name == 'push' ||
+      github.event_name == 'pull_request' &&
       github.event.pull_request.head.repo.full_name == github.repository
 
     steps:

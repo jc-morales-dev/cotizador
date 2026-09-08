@@ -1,10 +1,34 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
 
 export function Layout({ children }: { children: ReactNode }) {
   const { session } = useAuth()
+  const [saliendo, setSaliendo] = useState(false)
+  const [fallo, setFallo] = useState(false)
+
+  /**
+   * Antes era `onClick={() => supabase.auth.signOut()}`: una promesa suelta, sin
+   * await ni catch. Si fallaba por red no pasaba nada visible y la persona se iba
+   * creyendo que había cerrado sesión, que es justo lo que no se puede dejar pasar
+   * en un botón de cerrar sesión.
+   *
+   * ESLint no lo agarraba: eslint.config.js usa `recommended` y no
+   * `recommendedTypeChecked`, que es la que trae no-floating-promises.
+   */
+  async function cerrarSesion() {
+    setSaliendo(true)
+    setFallo(false)
+
+    const { error } = await supabase.auth.signOut()
+
+    if (error) {
+      setFallo(true)
+      setSaliendo(false)
+    }
+    // Si salió bien no se toca el estado: onAuthStateChange desmonta esto solo.
+  }
 
   return (
     <div className="min-h-dvh bg-ink text-slate-100">
@@ -21,12 +45,19 @@ export function Layout({ children }: { children: ReactNode }) {
             </Link>
             <button
               type="button"
-              onClick={() => supabase.auth.signOut()}
-              className="rounded-md border border-line px-3 py-1.5 text-slate-300 transition hover:border-brand/60 hover:text-brand"
+              onClick={cerrarSesion}
+              disabled={saliendo}
+              className="rounded-md border border-line px-3 py-1.5 text-slate-300 transition hover:border-brand/60 hover:text-brand disabled:opacity-60"
             >
-              Cerrar sesión
+              {saliendo ? 'Saliendo…' : 'Cerrar sesión'}
             </button>
           </div>
+
+          {fallo && (
+            <p role="alert" className="w-full text-right text-xs text-red-300">
+              No pudimos cerrar la sesión. Revisá tu conexión e intentá de nuevo.
+            </p>
+          )}
         </div>
       </header>
 

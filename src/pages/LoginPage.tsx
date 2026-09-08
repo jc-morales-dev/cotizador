@@ -1,6 +1,7 @@
 import { useId, useState, type FormEvent } from 'react'
 import { Link, Navigate, useLocation } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
+import { causaDelError, mensajeDelError } from '@/lib/erroresAuth'
 import { useAuth } from '@/hooks/useAuth'
 import { Spinner } from '@/components/ui'
 
@@ -13,7 +14,7 @@ const INPUT_CLASS =
   'w-full rounded-md border border-line bg-ink px-3 py-2 text-sm text-slate-100 placeholder:text-slate-600'
 
 export function LoginPage() {
-  const { session, loading } = useAuth()
+  const { session, estado } = useAuth()
   const location = useLocation()
   const nombreId = useId()
   const apellidoId = useId()
@@ -34,7 +35,9 @@ export function LoginPage() {
   const [sinConfirmar, setSinConfirmar] = useState(false)
   const [busy, setBusy] = useState(false)
 
-  if (loading) {
+  // 'error' entra acá igual que 'cargando': si no pudimos leer la sesión, lo peor
+  // que se puede hacer es asumir que no hay y pedirle que se loguee de nuevo.
+  if (estado !== 'lista') {
     return (
       <div className="min-h-dvh bg-ink">
         <Spinner label="Cargando…" />
@@ -64,12 +67,14 @@ export function LoginPage() {
     // Supabase distingue "falta confirmar" de "credenciales mal". Mostrar
     // "email o contraseña incorrectos" en el primer caso manda a la persona a
     // dudar de datos que en realidad son correctos.
-    if (signInError.message.toLowerCase().includes('not confirmed')) {
+    //
+    // La distinción se hace por código y no por el texto en inglés: ver
+    // src/lib/erroresAuth.ts.
+    if (causaDelError(signInError) === 'falta_confirmar') {
       setSinConfirmar(true)
-      setError('Tu cuenta existe, pero todavía no confirmaste el correo.')
-    } else {
-      setError('Email o contraseña incorrectos.')
     }
+
+    setError(mensajeDelError(signInError) ?? 'Email o contraseña incorrectos.')
   }
 
   async function crearCuenta() {
@@ -89,9 +94,8 @@ export function LoginPage() {
 
     if (signUpError) {
       setError(
-        signUpError.message.includes('already registered')
-          ? 'Ese email ya tiene cuenta. Probá iniciando sesión.'
-          : 'No pudimos crear la cuenta. Revisá el email y que la contraseña tenga 6 caracteres o más.',
+        mensajeDelError(signUpError) ??
+          'No pudimos crear la cuenta. Revisá el email y que la contraseña tenga 6 caracteres o más.',
       )
       return
     }
